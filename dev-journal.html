@@ -271,36 +271,20 @@ function saveHash(hash) { localStorage.setItem(HASH_KEY, hash); }
 function isLoggedIn() { return sessionStorage.getItem(SESSION_KEY) === 'ok'; }
 function logout() { sessionStorage.removeItem(SESSION_KEY); location.reload(); }
 
+const FIXED_HASH = '9a900403ac313ba27a1bc81f0932652b8020dac92c234d98fa0b06bf0040ecfd';
+
 async function initAuth() {
-  const hash = getHash();
   const subtitle = document.getElementById('auth-subtitle');
   const formArea = document.getElementById('auth-form-area');
-
-  if (!hash) {
-    // First time setup
-    subtitle.textContent = '歡迎！請先設定你的專屬密碼';
-    formArea.innerHTML = `
-      <label class="auth-label">設定密碼</label>
-      <input class="auth-input" type="password" id="pw1" placeholder="輸入你的密碼" autocomplete="new-password">
-      <label class="auth-label" style="margin-top:16px">確認密碼</label>
-      <input class="auth-input" type="password" id="pw2" placeholder="再輸入一次" autocomplete="new-password">
-      <button class="auth-btn" onclick="setupPassword()">設定並進入</button>
-      <div class="auth-error" id="auth-err"></div>
-      <div class="auth-hint">密碼會以 SHA-256 加密儲存在你的瀏覽器<br>只有你自己的裝置能看到這個日誌</div>
-    `;
-    document.getElementById('pw2').addEventListener('keydown', e => { if(e.key==='Enter') setupPassword(); });
-  } else {
-    // Login
-    subtitle.textContent = '請輸入密碼進入';
-    formArea.innerHTML = `
-      <label class="auth-label">密碼</label>
-      <input class="auth-input" type="password" id="pw-login" placeholder="輸入密碼" autocomplete="current-password">
-      <button class="auth-btn" onclick="login()">進入日誌</button>
-      <div class="auth-error" id="auth-err"></div>
-    `;
-    document.getElementById('pw-login').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
-    document.getElementById('pw-login').focus();
-  }
+  subtitle.textContent = '請輸入密碼進入';
+  formArea.innerHTML = `
+    <label class="auth-label">密碼</label>
+    <input class="auth-input" type="password" id="pw-login" placeholder="輸入密碼" autocomplete="current-password">
+    <button class="auth-btn" onclick="login()">進入日誌</button>
+    <div class="auth-error" id="auth-err"></div>
+  `;
+  document.getElementById('pw-login').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+  document.getElementById('pw-login').focus();
 }
 
 async function setupPassword() {
@@ -321,7 +305,7 @@ async function login() {
   const err = document.getElementById('auth-err');
   if (!pw) { err.textContent = '請輸入密碼'; return; }
   const hash = await sha256(pw);
-  if (hash === getHash()) {
+  if (hash === FIXED_HASH) {
     sessionStorage.setItem(SESSION_KEY, 'ok');
     showApp();
   } else {
@@ -555,6 +539,7 @@ if (isLoggedIn()) {
 } else {
   initAuth();
 }
+
 </script>
 </body>
 </html>

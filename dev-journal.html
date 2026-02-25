@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>// dev journal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e14;
+    --surface: #13151f;
+    --surface2: #1a1d2a;
+    --border: #252836;
+    --accent: #6c63ff;
+    --accent2: #9d97ff;
+    --green: #4ade80;
+    --blue: #60a5fa;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --purple: #c084fc;
+    --muted: #94a3b8;
+    --text: #e2e0f0;
+    --code-bg: #090b10;
+    --code-text: #7dd3fc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; min-height: 100vh; }
+  code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Auth Screen ── */
+  #auth-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    background-image: radial-gradient(ellipse at 20% 50%, #6c63ff0d 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 20%, #4ade800a 0%, transparent 50%);
+  }
+  .auth-box {
+    width: 100%; max-width: 400px; padding: 0 20px;
+  }
+  .auth-logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px; font-weight: 700; color: var(--accent2);
+    margin-bottom: 8px; letter-spacing: 0.02em;
+  }
+  .auth-sub { font-size: 13px; color: var(--muted); margin-bottom: 40px; }
+  .auth-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent2); font-weight: 700; letter-spacing: 0.15em; margin-bottom: 8px; display: block; }
+  .auth-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 14px 16px; font-size: 15px;
+    font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.2s;
+    letter-spacing: 0.1em;
+  }
+  .auth-input:focus { border-color: var(--accent); }
+  .auth-btn {
+    width: 100%; margin-top: 16px; background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; padding: 14px; font-size: 14px; font-weight: 700;
+    font-family: 'JetBrains Mono', monospace; cursor: pointer; letter-spacing: 0.05em;
+    transition: opacity 0.2s;
+  }
+  .auth-btn:hover { opacity: 0.85; }
+  .auth-error { color: var(--red); font-size: 12px; margin-top: 10px; text-align: center; min-height: 18px; }
+  .auth-hint { color: var(--muted); font-size: 11px; margin-top: 24px; text-align: center; line-height: 1.6; }
+
+  /* ── App ── */
+  #app { display: none; }
+  .header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-logo { font-family: 'JetBrains Mono', monospace; font-size: 16px; font-weight: 700; color: var(--accent2); }
+  .header-sub { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 8px 18px; font-size: 12px; font-weight: 700; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.03em; transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-ghost {
+    background: transparent; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace; transition: color 0.2s, border-color 0.2s;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .btn-danger {
+    background: transparent; color: var(--red); border: 1px solid #f8717144;
+    border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .body { max-width: 780px; margin: 0 auto; padding: 24px 16px; }
+
+  /* Search & Filter */
+  .search-input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 11px 16px; font-size: 13px;
+    font-family: 'Noto Sans TC', sans-serif; outline: none; margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
+  .tag-filter {
+    border-radius: 20px; padding: 4px 14px; cursor: pointer; font-size: 11px;
+    font-family: 'JetBrains Mono', monospace; font-weight: 600; border: 1px solid var(--border);
+    background: var(--surface); color: var(--muted); transition: all 0.15s;
+  }
+  .tag-filter.active { border-color: transparent; color: #000; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 12px; cursor: pointer; transition: border-color 0.2s, transform 0.1s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .card-tag {
+    display: inline-block; border-radius: 4px; padding: 2px 8px;
+    font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 8px; color: #000; letter-spacing: 0.05em;
+  }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .card-summary { font-size: 12px; color: var(--muted); margin-bottom: 6px; line-height: 1.5; }
+  .card-meta { font-size: 10px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  .card-code-preview {
+    background: var(--code-bg); border-radius: 6px; padding: 8px 10px;
+    font-size: 11px; color: var(--code-text); margin-top: 8px;
+    white-space: pre; overflow: hidden; max-height: 52px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .empty { text-align: center; color: var(--muted); padding: 80px 0; font-size: 14px; line-height: 2; }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+
+  /* Form */
+  .form-wrap {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px;
+  }
+  .form-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--accent2);
+    font-weight: 700; letter-spacing: 0.15em; margin-bottom: 8px; display: block;
+  }
+  .form-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 9px;
+    color: var(--text); padding: 11px 14px; font-size: 13px;
+    font-family: 'Noto Sans TC', sans-serif; outline: none; margin-bottom: 18px;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; line-height: 1.7; }
+  .form-code {
+    width: 100%; background: var(--code-bg); border: 1px solid var(--border); border-radius: 9px;
+    color: var(--code-text); padding: 12px 14px; font-size: 12px;
+    font-family: 'JetBrains Mono', monospace; outline: none; margin-bottom: 18px;
+    resize: vertical; line-height: 1.6; transition: border-color 0.2s;
+  }
+  .form-code:focus { border-color: var(--blue); }
+  .form-select {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 9px;
+    color: var(--text); padding: 11px 14px; font-size: 13px;
+    font-family: 'Noto Sans TC', sans-serif; outline: none; margin-bottom: 18px; width: 100%;
+  }
+  .form-btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+  .ai-badge {
+    display: inline-flex; align-items: center; gap: 6px; background: #6c63ff18;
+    border: 1px solid #6c63ff33; border-radius: 6px; padding: 6px 12px;
+    font-size: 11px; color: var(--accent2); font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 20px;
+  }
+  .spinner {
+    width: 12px; height: 12px; border: 2px solid #6c63ff44; border-top-color: var(--accent2);
+    border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Detail */
+  .detail-tag { display: inline-block; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #000; margin-bottom: 10px; }
+  .detail-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+  .detail-meta { font-size: 11px; color: var(--muted); font-family: 'JetBrains Mono', monospace; margin-bottom: 24px; }
+  .summary-box {
+    background: #6c63ff12; border: 1px solid #6c63ff2a; border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 18px;
+  }
+  .summary-box-label { font-size: 10px; color: var(--accent2); font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.12em; margin-bottom: 6px; }
+  .summary-box-text { font-size: 14px; line-height: 1.6; }
+  .keypoints { list-style: none; margin-bottom: 20px; }
+  .keypoints li { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+  .kp-dot { color: var(--accent); font-size: 16px; flex-shrink: 0; margin-top: -1px; }
+  .section-label { font-size: 10px; color: var(--accent2); font-weight: 700; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.15em; margin-bottom: 10px; }
+  .note-box { background: var(--surface2); border-radius: 9px; padding: 16px; font-size: 13px; line-height: 1.8; white-space: pre-wrap; margin-bottom: 18px; }
+  .code-box { background: var(--code-bg); border-radius: 9px; padding: 16px; font-size: 12px; color: var(--code-text); white-space: pre-wrap; overflow-x: auto; font-family: 'JetBrains Mono', monospace; line-height: 1.7; }
+
+  /* Stats bar */
+  .stats-row { display: flex; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+  .stat-chip {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 14px; font-size: 11px; font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+  }
+  .stat-chip span { color: var(--text); font-weight: 700; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .header { padding: 12px 16px; }
+    .body { padding: 16px 12px; }
+    .form-wrap { padding: 20px 16px; }
+    .detail-title { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Auth Screen ── -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">// dev journal</div>
+    <div class="auth-sub" id="auth-subtitle">載入中...</div>
+    <div id="auth-form-area"></div>
+  </div>
+</div>
+
+<!-- ── App ── -->
+<div id="app">
+  <div class="header">
+    <div>
+      <div class="header-logo">// dev journal</div>
+      <div class="header-sub" id="header-count">0 筆學習紀錄</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-ghost" onclick="logout()">登出</button>
+      <button class="btn-primary" onclick="showView('add')">+ 新增紀錄</button>
+    </div>
+  </div>
+  <div class="body" id="app-body"></div>
+</div>
+
+<script>
+// ── Constants ──
+const ENTRIES_KEY = 'devjournal_entries';
+const HASH_KEY = 'devjournal_pw_hash';
+const SESSION_KEY = 'devjournal_session';
+const CATEGORIES = ['命名習慣','架構思路','常用 Pattern','除錯技巧','程式碼風格','其他'];
+const TAG_COLORS = {
+  '命名習慣':'#4ade80','架構思路':'#60a5fa','常用 Pattern':'#fbbf24',
+  '除錯技巧':'#f87171','程式碼風格':'#c084fc','其他':'#94a3b8'
+};
+
+// ── State ──
+let currentView = 'list';
+let selectedEntry = null;
+let searchQuery = '';
+let filterTag = '全部';
+
+// ── Crypto ──
+async function sha256(message) {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ── Storage ──
+function getEntries() {
+  try { return JSON.parse(localStorage.getItem(ENTRIES_KEY) || '[]'); } catch { return []; }
+}
+function saveEntries(entries) {
+  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries));
+}
+function getHash() { return localStorage.getItem(HASH_KEY); }
+function saveHash(hash) { localStorage.setItem(HASH_KEY, hash); }
+
+// ── Auth ──
+function isLoggedIn() { return sessionStorage.getItem(SESSION_KEY) === 'ok'; }
+function logout() { sessionStorage.removeItem(SESSION_KEY); location.reload(); }
+
+async function initAuth() {
+  const hash = getHash();
+  const subtitle = document.getElementById('auth-subtitle');
+  const formArea = document.getElementById('auth-form-area');
+
+  if (!hash) {
+    // First time setup
+    subtitle.textContent = '歡迎！請先設定你的專屬密碼';
+    formArea.innerHTML = `
+      <label class="auth-label">設定密碼</label>
+      <input class="auth-input" type="password" id="pw1" placeholder="輸入你的密碼" autocomplete="new-password">
+      <label class="auth-label" style="margin-top:16px">確認密碼</label>
+      <input class="auth-input" type="password" id="pw2" placeholder="再輸入一次" autocomplete="new-password">
+      <button class="auth-btn" onclick="setupPassword()">設定並進入</button>
+      <div class="auth-error" id="auth-err"></div>
+      <div class="auth-hint">密碼會以 SHA-256 加密儲存在你的瀏覽器<br>只有你自己的裝置能看到這個日誌</div>
+    `;
+    document.getElementById('pw2').addEventListener('keydown', e => { if(e.key==='Enter') setupPassword(); });
+  } else {
+    // Login
+    subtitle.textContent = '請輸入密碼進入';
+    formArea.innerHTML = `
+      <label class="auth-label">密碼</label>
+      <input class="auth-input" type="password" id="pw-login" placeholder="輸入密碼" autocomplete="current-password">
+      <button class="auth-btn" onclick="login()">進入日誌</button>
+      <div class="auth-error" id="auth-err"></div>
+    `;
+    document.getElementById('pw-login').addEventListener('keydown', e => { if(e.key==='Enter') login(); });
+    document.getElementById('pw-login').focus();
+  }
+}
+
+async function setupPassword() {
+  const pw1 = document.getElementById('pw1').value;
+  const pw2 = document.getElementById('pw2').value;
+  const err = document.getElementById('auth-err');
+  if (!pw1) { err.textContent = '請輸入密碼'; return; }
+  if (pw1.length < 4) { err.textContent = '密碼至少需要 4 個字元'; return; }
+  if (pw1 !== pw2) { err.textContent = '兩次密碼不一樣，請再試一次'; return; }
+  const hash = await sha256(pw1);
+  saveHash(hash);
+  sessionStorage.setItem(SESSION_KEY, 'ok');
+  showApp();
+}
+
+async function login() {
+  const pw = document.getElementById('pw-login').value;
+  const err = document.getElementById('auth-err');
+  if (!pw) { err.textContent = '請輸入密碼'; return; }
+  const hash = await sha256(pw);
+  if (hash === getHash()) {
+    sessionStorage.setItem(SESSION_KEY, 'ok');
+    showApp();
+  } else {
+    err.textContent = '密碼錯誤，請再試一次';
+    document.getElementById('pw-login').value = '';
+    document.getElementById('pw-login').focus();
+  }
+}
+
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  showView('list');
+}
+
+// ── Views ──
+function showView(view, entry) {
+  currentView = view;
+  if (entry) selectedEntry = entry;
+  render();
+}
+
+function render() {
+  const entries = getEntries();
+  updateHeaderCount(entries.length);
+  if (currentView === 'list') renderList(entries);
+  else if (currentView === 'add') renderAdd();
+  else if (currentView === 'detail') renderDetail();
+}
+
+function updateHeaderCount(n) {
+  document.getElementById('header-count').textContent = `${n} 筆學習紀錄`;
+}
+
+function renderList(entries) {
+  const filtered = entries.filter(e => {
+    const matchTag = filterTag === '全部' || e.tag === filterTag;
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !q || e.title.toLowerCase().includes(q) || (e.note||'').toLowerCase().includes(q) || (e.code||'').toLowerCase().includes(q);
+    return matchTag && matchSearch;
+  });
+
+  const tagCounts = {};
+  CATEGORIES.forEach(c => tagCounts[c] = entries.filter(e => e.tag === c).length);
+
+  let html = `
+    <input class="search-input" type="text" placeholder="搜尋筆記、程式碼..." value="${escHtml(searchQuery)}" oninput="searchQuery=this.value;render()" />
+    <div class="tag-row">
+      <button class="tag-filter ${filterTag==='全部'?'active':''}" style="${filterTag==='全部'?'background:var(--accent);color:#fff;border-color:transparent':''}" onclick="filterTag='全部';render()">全部 (${entries.length})</button>
+      ${CATEGORIES.map(tag => `
+        <button class="tag-filter ${filterTag===tag?'active':''}" 
+          style="${filterTag===tag?`background:${TAG_COLORS[tag]};border-color:transparent`:''}"
+          onclick="filterTag='${tag}';render()">
+          ${tag} ${tagCounts[tag]?`(${tagCounts[tag]})`:''}
+        </button>
+      `).join('')}
+    </div>`;
+
+  if (filtered.length === 0) {
+    html += `<div class="empty">
+      <div class="empty-icon">📝</div>
+      ${entries.length === 0 ? '還沒有紀錄<br>點右上角「+ 新增紀錄」開始記錄你的學習！' : '找不到符合的紀錄'}
+    </div>`;
+  } else {
+    filtered.forEach(e => {
+      html += `<div class="card" onclick="showView('detail', ${JSON.stringify(e).replace(/"/g,'&quot;')})">
+        <span class="card-tag" style="background:${TAG_COLORS[e.tag]||'#94a3b8'}">${e.tag}</span>
+        <div class="card-title">${escHtml(e.title)}</div>
+        ${e.summary ? `<div class="card-summary">${escHtml(e.summary)}</div>` : ''}
+        <div class="card-meta">${e.date} ${e.time}</div>
+        ${e.code ? `<div class="card-code-preview">${escHtml(e.code.substring(0,120))}${e.code.length>120?'...':''}</div>` : ''}
+      </div>`;
+    });
+  }
+
+  document.getElementById('app-body').innerHTML = html;
+}
+
+function renderAdd() {
+  document.getElementById('app-body').innerHTML = `
+    <button class="btn-ghost" style="margin-bottom:20px" onclick="showView('list')">← 返回列表</button>
+    <div class="form-wrap">
+      <div class="ai-badge">✦ 儲存後 AI 會自動歸納分析</div>
+      
+      <label class="form-label">標題（選填，留空會由 AI 自動生成）</label>
+      <input class="form-input" type="text" id="f-title" placeholder="例：主管的 async/await 使用方式">
+
+      <label class="form-label">學習觀察 / 筆記 *</label>
+      <textarea class="form-input form-textarea" id="f-note" rows="5" placeholder="寫下你觀察到的、學到的...&#10;例：主管今天寫了一個處理 API 錯誤的 function，他用了 try/catch 包住 await，然後在 catch 裡面..."></textarea>
+
+      <label class="form-label">程式碼片段（選填）</label>
+      <textarea class="form-code" id="f-code" rows="7" placeholder="// 貼上相關程式碼..."></textarea>
+
+      <label class="form-label">分類（AI 會自動判斷，也可手動選）</label>
+      <select class="form-select" id="f-tag">
+        ${CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+      </select>
+
+      <div class="form-btn-row">
+        <button class="btn-ghost" onclick="showView('list')">取消</button>
+        <button class="btn-primary" id="submit-btn" onclick="submitEntry()">儲存 + AI 歸納</button>
+      </div>
+      <div id="submit-status" style="text-align:right;margin-top:10px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace;"></div>
+    </div>
+  `;
+}
+
+function renderDetail() {
+  const e = selectedEntry;
+  if (!e) { showView('list'); return; }
+  document.getElementById('app-body').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <button class="btn-ghost" onclick="showView('list')">← 返回列表</button>
+      <button class="btn-danger" onclick="deleteEntry(${e.id})">刪除這筆</button>
+    </div>
+    <span class="detail-tag" style="background:${TAG_COLORS[e.tag]||'#94a3b8'}">${e.tag}</span>
+    <div class="detail-title">${escHtml(e.title)}</div>
+    <div class="detail-meta">${e.date} ${e.time}</div>
+
+    ${e.summary ? `
+    <div class="summary-box">
+      <div class="summary-box-label">✦ AI 摘要</div>
+      <div class="summary-box-text">${escHtml(e.summary)}</div>
+    </div>` : ''}
+
+    ${e.keypoints?.length ? `
+    <div class="section-label" style="margin-bottom:10px">關鍵要點</div>
+    <ul class="keypoints">
+      ${e.keypoints.map(kp => `<li><span class="kp-dot">▸</span><span>${escHtml(kp)}</span></li>`).join('')}
+    </ul>` : ''}
+
+    ${e.note ? `
+    <div class="section-label">原始筆記</div>
+    <div class="note-box">${escHtml(e.note)}</div>` : ''}
+
+    ${e.code ? `
+    <div class="section-label">程式碼片段</div>
+    <pre class="code-box">${escHtml(e.code)}</pre>` : ''}
+  `;
+}
+
+// ── Submit ──
+async function submitEntry() {
+  const title = document.getElementById('f-title').value.trim();
+  const note = document.getElementById('f-note').value.trim();
+  const code = document.getElementById('f-code').value.trim();
+  const manualTag = document.getElementById('f-tag').value;
+  const status = document.getElementById('submit-status');
+  const btn = document.getElementById('submit-btn');
+
+  if (!note && !code) {
+    status.style.color = 'var(--red)';
+    status.textContent = '請至少填寫筆記或程式碼';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> AI 分析中...';
+  status.style.color = 'var(--muted)';
+  status.textContent = '正在呼叫 Claude API...';
+
+  let aiResult = null;
+  try {
+    aiResult = await analyzeWithClaude(note, code);
+    status.textContent = 'AI 分析完成 ✓';
+  } catch(err) {
+    status.style.color = 'var(--amber)';
+    status.textContent = 'AI 分析失敗，以手動分類儲存';
+  }
+
+  const entry = {
+    id: Date.now(),
+    title: title || aiResult?.summary || '學習紀錄',
+    note, code,
+    tag: aiResult?.category || manualTag,
+    summary: aiResult?.summary || '',
+    keypoints: aiResult?.keypoints || [],
+    date: new Date().toLocaleDateString('zh-TW'),
+    time: new Date().toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' }),
+  };
+
+  const entries = getEntries();
+  entries.unshift(entry);
+  saveEntries(entries);
+  showView('list');
+}
+
+async function analyzeWithClaude(note, code) {
+  const prompt = `你是一個程式學習助理。以下是學習者記錄的觀察筆記${code?'和程式碼':''}，請：
+1. 用一句話摘要這個學習重點（繁體中文，30字以內）
+2. 從以下分類選一個最適合的：命名習慣、架構思路、常用 Pattern、除錯技巧、程式碼風格、其他
+3. 列出2-4個關鍵要點（每點15字以內）
+
+筆記：${note}
+${code?`程式碼：\n${code}`:''}
+
+只回傳 JSON，不要有其他文字或 markdown：
+{"summary":"...","category":"...","keypoints":["...","..."]}`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await res.json();
+  const text = (data.content||[]).map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+  return JSON.parse(text);
+}
+
+// ── Delete ──
+function deleteEntry(id) {
+  if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+  const entries = getEntries().filter(e => e.id !== id);
+  saveEntries(entries);
+  showView('list');
+}
+
+// ── Utils ──
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──
+if (isLoggedIn()) {
+  showApp();
+} else {
+  initAuth();
+}
+</script>
+</body>
+</html>
